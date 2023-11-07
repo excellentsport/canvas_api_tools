@@ -16,6 +16,7 @@
 # 2020.02.04
 # based on earlier list_your_courses_JSON.py
 #
+# https://github.com/gqmaguirejr/Canvas-tools
 
 import requests, time
 import pprint

@@ -10,10 +10,11 @@
 #
 # 
 # G. Q. Maguire Jr.
-#
+# 
 # 2017.02.27
 # revised on 2019.01.04
 #
+# https://github.com/gqmaguirejr/Canvas-tools
 
 import requests, time
 import pprint
