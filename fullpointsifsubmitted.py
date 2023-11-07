@@ -1,20 +1,25 @@
-## TODO Need to look into whether or not this will handle groups
+"""
+Give full points to any submission without a grade for specified course assignment
+"""
+
+# TODO Need to look into whether or not this will handle groups
 
 import json
 import os
 from canvasapi import Canvas
 
-course_number = 21519
-assignment_number = 325713
+COURSE_NUMBER = 21519
+ASSIGNMENT_NUMBER = 325713
 
 # Get Canvas API credentials
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-data = json.load(open(os.path.join(__location__, 'config.json')))
+data = json.load(open(os.path.join(__location__, 'config.json'), encoding="utf-8"))
 
 api_key = data["canvas"]["access_token"]
-api_url = data["canvas"]["host"]
+api_url = data["canvas"]["beta_host"]
+# TODO need to add option to switch between beta & prod
 
 
 # Initialize Canvas Object
@@ -22,9 +27,10 @@ canvas = Canvas(api_url, api_key)
 
 
 # Get Course object
-course = canvas.get_course(course_number)
+course = canvas.get_course(COURSE_NUMBER)
+print("\n" + "Accessing info for course " + course.name + "\n")
 
-assignment = course.get_assignment(assignment_number)
+assignment = course.get_assignment(ASSIGNMENT_NUMBER)
 
 # Get reference list of student names
 students = course.get_users(enrollment_type=['student'])
