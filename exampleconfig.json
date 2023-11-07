@@ -1,0 +1,6 @@
+{
+    "canvas": {
+        "access_token": "123abc",
+        "host": "URLtoCanvasInstance"
+    }
+}
