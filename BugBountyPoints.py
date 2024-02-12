@@ -60,14 +60,15 @@ for i in course.get_assignments():
     if regex_bug.match(i.name):
         BUG_ASSIGN_ID = i.id
 
-points_to_add = pyinputplus.inputInt(prompt="\nHow many points should be added?\n", min=1, max=5)
-
 assignment = course.get_assignment(BUG_ASSIGN_ID)
 submission = assignment.get_submission(SEL_STUDENT_DICT["id"])
 
 print('\n' + SEL_STUDENT_DICT["name"] +
       "'s score for the Bug Bounty is " +
       str(submission.score) + ".")
+
+points_to_add = pyinputplus.inputInt(prompt="\nHow many points should be added?\n", min=1, max=5)
+
 confirm = pyinputplus.inputYesNo(prompt="Are you sure you wish to add " +
                                         str(points_to_add) +
                                         " points?\n")
