@@ -11,12 +11,15 @@ USER_ID = os.environ['CANVAS_USER_ID']
 
 canvas = Canvas(BETA_URL, API_KEY)
 
-classes = canvas_lib.get_current_courses(canvas, USER_ID)
+courses = canvas_lib.get_current_courses(canvas, USER_ID)
 
-
-exit()
+#unfinished....
+"""
+ungraded_assignments = [course.get_assignments(bucket='ungraded')]
 
 assignments = course.get_assignments(bucket='ungraded')
 
 for assignment in assignments:
     print(assignment)
+
+    '''
