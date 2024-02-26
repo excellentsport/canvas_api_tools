@@ -6,7 +6,8 @@ import os
 from canvasapi import Canvas
 import canvas_lib
 
-#determine platform to ensure env variabkes come from correct source
+
+#determine platform to ensure env variables come from correct source
 if platform == 'ios':
 	import keychain
 	USER_ID = int(keychain.get_password('CANVAS_USER_ID','a'))
@@ -26,9 +27,12 @@ canvas = Canvas(BETA_URL, API_KEY)
 
 courses = canvas_lib.get_current_courses(canvas, USER_ID)
 
+
+# list all ungraded assignments across courses
+
 ungraded_items_list=[]
 list_item = 0
-# list all ungraded assignments across courses
+
 for count, course in enumerate(courses):
 	assignments = courses[count].get_assignments(bucket='ungraded')
 	for assignment in assignments:
@@ -39,4 +43,5 @@ for count, course in enumerate(courses):
 			'course':course,
 			'assignment':assignment
 			})
+
 
