@@ -22,26 +22,44 @@ if platform == 'windows':
 	USER_ID = os.environ['CANVAS_USER_ID']
 
 
+def get_ungraded_assignments(courses):
+	"""takes list of canvas course objects to find ones with ungraded items"""
+	ungraded_items_list=[]
+	list_item = 0
+	
+	for count, course in enumerate(courses):
+		assignments = courses[count].get_assignments(bucket='ungraded')
+		for assignment in assignments:
+			list_item +=1
+			print(str(list_item) + '. ' + course.name + ' -- ' + assignment.name)
+			ungraded_items_list.append({
+				'item_number':list_item,
+				'course':course,
+				'assignment':assignment
+				})
+	return ungraded_items_list
 
-canvas = Canvas(BETA_URL, API_KEY)
+def get_submissions(course, assignment_id):
+	"""gets all ungraded submissions from a Canvas assignment object"""
+	
+	submissions = course.get_assignment(assignment_id).get_submissions()
+	for submission in submissions:
+		print(submission)
+	
+	return submissions
+	
+	
 
-courses = canvas_lib.get_current_courses(canvas, USER_ID)
+def main():
+	canvas = Canvas(BETA_URL, API_KEY)
+	
+	global courses
+	courses = canvas_lib.get_current_courses(canvas, USER_ID)
+	
+	#developing only code
+	global submissions
+	submissions = get_submissions(courses[1], 362450)
+	
 
 
-# list all ungraded assignments across courses
-
-ungraded_items_list=[]
-list_item = 0
-
-for count, course in enumerate(courses):
-	assignments = courses[count].get_assignments(bucket='ungraded')
-	for assignment in assignments:
-		list_item +=1
-		print(str(list_item) + '. ' + course.name + ' -- ' + assignment.name)
-		ungraded_items_list.append({
-			'item_number':list_item,
-			'course':course,
-			'assignment':assignment
-			})
-
-
+if __name__ == "__main__": main()
