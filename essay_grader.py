@@ -15,7 +15,7 @@ if platform == 'ios':
 	PROD_URL = keychain.get_password('CANVAS_PRODUCTION_URL','a')
 	BETA_URL = keychain.get_password('CANVAS_BETA_URL','a')
 
-if platform == 'windows':
+if platform == 'windows' or 'win32':
 	API_KEY = os.environ['CANVAS_API_KEY']
 	BETA_URL = os.environ['CANVAS_BETA_URL']
 	PROD_URL = os.environ['CANVAS_PRODUCTION_URL']
@@ -42,13 +42,29 @@ def get_ungraded_assignments(courses):
 def get_submissions(course, assignment_id):
 	"""gets all ungraded submissions from a Canvas assignment object"""
 	
+	#TODO Does this really need to be its own function?
+
 	submissions = course.get_assignment(assignment_id).get_submissions()
-	for submission in submissions:
-		print(submission)
-	
+
 	return submissions
-	
-	
+
+def parse_submission(submission_object):
+	"""gets key information from submission for easier processing"""
+
+	#build dictionary with the following:
+	"""
+	{
+		"submission_id": xxxx,
+		"number_of_questions": xxxx,
+		"total_points_possible": xxxx,
+		"grader_id": xxxx, #will be null if ungraded - can use to filter ungraded
+		"question1_response"
+	}
+	"""
+
+
+	# TODO: The way to get all quiz responses is to get Quiz submissions: https://canvas.instructure.com/doc/api/quiz_submission_events.html
+	# It isn't via assignment or quiz objects, so my original approach to getting ungraded assignments and parsing those submissions isn't going to work.
 
 def main():
 	canvas = Canvas(BETA_URL, API_KEY)
