@@ -18,7 +18,7 @@ __location__ = os.path.realpath(
 data = json.load(open(os.path.join(__location__, 'config.json'), encoding="utf-8"))
 
 api_key = data["canvas"]["access_token"]
-api_url = data["canvas"]["beta_host"]
+api_url = data["canvas"]["prod_host"]
 # TODO need to add option to switch between beta & prod
 
 

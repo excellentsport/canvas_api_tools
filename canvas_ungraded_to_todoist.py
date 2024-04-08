@@ -8,7 +8,7 @@ if different, and bumps tasks priority when due date arrives.
 
 from sys import platform
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from canvasapi import Canvas
 from todoist_api_python.api import TodoistAPI
 
@@ -62,7 +62,21 @@ def get_current_courses(canvas_object, user_id, max_age=250):
     return recent_courses
 
 
-def get_ungraded_metadata(assignment_object):
+def build_course_ref(course_list):
+    """Takes a list of course objects to build a list of dicts with course id and name"""
+
+    course_ref_list = []
+    for course in course_list:
+        course_ref_dict = {
+            "course_id": course.id,
+            "course_name": course.name
+        }
+        course_ref_list.append(course_ref_dict)
+
+    return course_ref_list
+
+
+def get_ungraded_metadata(assignment_object, course_ref_list):
     """puts basic metadata from Canvas assignment object into a dictionary"""
 
     speedgrader_url = (
@@ -78,15 +92,27 @@ def get_ungraded_metadata(assignment_object):
         + str(datetime.now().replace(microsecond=0))
     )
 
+    # make task name with course prefix
+    course_prefix = list(filter(lambda course_ref_list: course_ref_list["course_id"] == assignment_object.course_id, course_ref_list))[0]["course_name"][:6]
+    assignment_task_name = course_prefix + " " + assignment_object.name
+
     ungraded_dict = {
         "name": assignment_object.name,
+        "task_name": assignment_task_name,
+        "course_id": assignment_object.course_id,
         "url": assignment_object.html_url,
         "speedgrader_url": speedgrader_url,
         "id": assignment_object.id,
         "count": assignment_object.needs_grading_count,
-        "ungraded_string": ungraded_string,
-        "due": assignment_object.due_at_date,
+        "ungraded_string": ungraded_string
     }
+
+    # handle items without due dates correctly
+    if hasattr(assignment_object, "due_at_date"):
+        ungraded_dict.update({"due": assignment_object.due_at_date})
+    else:
+        new_due_date = datetime.fromisoformat(assignment_object.updated_at) + timedelta(days=10)
+        ungraded_dict.update({"due": new_due_date})
 
     return ungraded_dict
 
@@ -97,14 +123,14 @@ def make_grading_todo(item_dict, api_object):
     try:
         task = api_object.add_task(
             content="Grade "
-            + item_dict["name"]
+            + item_dict["task_name"]
             + " [Speedgrader Link]("
             + item_dict["speedgrader_url"]
             + ")",
             priority=2,
             description=item_dict["ungraded_string"],
         )
-        print("Created New item:")
+        print("\nCreated New item:")
         print(task)
     except Exception as error:
         print(error)
@@ -158,6 +184,8 @@ def main():
 
     courses = get_current_courses(canvas, USER_ID)
 
+    course_ref_list = build_course_ref(courses)
+
     global ungraded_items  # only needed for debugging & development
     ungraded_items = get_ungraded_assignments(courses)
 
@@ -165,13 +193,14 @@ def main():
     global ungraded_list  # only needed for debugging & development
     ungraded_list = []
     for i in ungraded_items:
-        ungraded_list.append(get_ungraded_metadata(i["assignment"]))
+        ungraded_list.append(get_ungraded_metadata(i["assignment"], course_ref_list))
 
     api = TodoistAPI(TD_KEY)
 
     for assignment in ungraded_list:
+
         # check if there is a Todoist task matching the ungraded item's name
-        existing_td_task = task_exists(assignment["name"], api)
+        existing_td_task = task_exists(assignment["task_name"], api)
 
         # if task doesn't exist, create it
         if not existing_td_task:
