@@ -4,15 +4,16 @@ them to Todoist if they don't exist. Updates ungraded count in task description
 if different, and bumps tasks priority when due date arrives.
 """
 
-# TODO add function to complete a task when the number of ungraded items changes to 0
 
 from sys import platform
 import os
 from datetime import datetime, timezone, timedelta
+import re
 from canvasapi import Canvas
 from todoist_api_python.api import TodoistAPI
 
-# get keys, api endpoints etc
+
+# get keys, td_api endpoints etc
 if platform == "ios":
     import keychain
 
@@ -93,7 +94,13 @@ def get_ungraded_metadata(assignment_object, course_ref_list):
     )
 
     # make task name with course prefix
-    course_prefix = list(filter(lambda course_ref_list: course_ref_list["course_id"] == assignment_object.course_id, course_ref_list))[0]["course_name"][:6]
+    course_prefix = list(
+        filter(
+            lambda course_ref_list: course_ref_list["course_id"]
+            == assignment_object.course_id,
+            course_ref_list,
+        )
+    )[0]["course_name"][:6]
     assignment_task_name = course_prefix + " " + assignment_object.name
 
     ungraded_dict = {
@@ -117,11 +124,19 @@ def get_ungraded_metadata(assignment_object, course_ref_list):
     return ungraded_dict
 
 
-def make_grading_todo(item_dict, api_object):
+def task_exists(search_name, td_tasks_list):
+    """checks if assignment name can be found in active TD tasks"""
+
+    for i in td_tasks_list:
+        if search_name in i.content:
+            return i
+
+
+def make_grading_todo(item_dict, td_api_object):
     """adds todoist item from ungraded item dictionary"""
 
     try:
-        task = api_object.add_task(
+        task = td_api_object.add_task(
             content="Grade "
             + item_dict["task_name"]
             + " [Speedgrader Link]("
@@ -136,14 +151,14 @@ def make_grading_todo(item_dict, api_object):
         print(error)
 
 
-def update_ungraded_count(item_dict, td_task_object, api_object):
+def update_ungraded_count(item_dict, td_task_object, td_api_object):
     """adds current ungraded count to description if
     different than last reported value in todoist task"""
 
     new_description = item_dict["ungraded_string"] + "\n" + td_task_object.description
 
     try:
-        is_success = api_object.update_task(
+        is_success = td_api_object.update_task(
             task_id=td_task_object.id, description=new_description
         )
         print("\nUpdated Number to grade for:")
@@ -152,34 +167,43 @@ def update_ungraded_count(item_dict, td_task_object, api_object):
         print(error)
 
 
-def task_exists(search_name, api_object):
-    """checks if assignment name can be found in active TD tasks"""
-
-    try:
-        tasks_json = api_object.get_tasks()
-    except Exception as error:
-        print(error)
-
-    for i in tasks_json:
-        if search_name in i.content:
-            return i
-
-
-def adjust_priority_after_due(item_dict, td_task_object, api_object):
+def adjust_priority_after_due(item_dict, td_task_object, td_api_object):
     """bump priority of grading items after assignment due date"""
+
     difference = item_dict["due"].timestamp() - datetime.now().timestamp()
 
     if difference < 0 and td_task_object.priority < 3:
         try:
-            is_success = api_object.update_task(task_id=td_task_object.id, priority=3)
+            is_success = td_api_object.update_task(task_id=td_task_object.id, priority=3)
             print("\nBumped priority for:")
             print(is_success)
         except Exception as error:
             print(error)
 
 
+def mark_task_complete_no_items(td_tasks, ungraded_list_canvas, td_api):
+    """check td grading tasks against ungraded canvas items; mark as complete if not found"""
+
+    ass_id_list = [x["id"] for x in ungraded_list_canvas]
+
+    for i in td_tasks:
+        if "Speedgrader Link" in i.content:
+            ass_id = int(re.search(r'(?<=assignment_id=)[0-9]*', i.content)[0])
+            if ass_id not in ass_id_list:
+                print(ass_id)
+                try:
+                    is_success = td_api.close_task(task_id=i.id)
+                    print(is_success)
+                except Exception as error:
+                    print(error)
+            else:
+                continue
+
+
 def main():
     """tie it all together..."""
+
+    # Get everything needed from the Canvas side
     canvas = Canvas(PROD_URL, API_KEY)
 
     courses = get_current_courses(canvas, USER_ID)
@@ -195,24 +219,36 @@ def main():
     for i in ungraded_items:
         ungraded_list.append(get_ungraded_metadata(i["assignment"], course_ref_list))
 
-    api = TodoistAPI(TD_KEY)
+    # get all Todoist Task Objects into a list
+    td_api = TodoistAPI(TD_KEY)
+
+    try:
+        td_tasks = td_api.get_tasks()
+    except Exception as error:
+        print(error)
 
     for assignment in ungraded_list:
 
         # check if there is a Todoist task matching the ungraded item's name
-        existing_td_task = task_exists(assignment["task_name"], api)
+        existing_td_task = task_exists(assignment["task_name"], td_tasks)
 
         # if task doesn't exist, create it
         if not existing_td_task:
-            make_grading_todo(assignment, api)
+            make_grading_todo(assignment, td_api)
+
         # if task exists but has different number to grade than
-        #   indicated by Canvas, then update task description
+        # indicated by Canvas, then update task description
+        # TODO This isn't all that robust - it will goof up
+        # TODO with partial matches, i.e. "2" is in "20"
+
         elif str(assignment["count"]) not in existing_td_task.description[:5]:
-            update_ungraded_count(assignment, existing_td_task, api)
+            update_ungraded_count(assignment, existing_td_task, td_api)
 
         # if it's past the assignment's due date, bump up grading priority
         if existing_td_task:
-            adjust_priority_after_due(assignment, existing_td_task, api)
+            adjust_priority_after_due(assignment, existing_td_task, td_api)
+
+    mark_task_complete_no_items(td_tasks, ungraded_list, td_api)
 
 
 if __name__ == "__main__":
