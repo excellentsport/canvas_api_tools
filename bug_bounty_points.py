@@ -8,6 +8,8 @@ from canvasapi import Canvas
 import pyinputplus
 
 # TODO build this out with functions, classes etc to make more flexible
+# TODO make input validation run as while loop so that if I say no to an option, it can ask again, go up a menu etc
+# TODO set up autocompletion for names, using something like https://python-prompt-toolkit.readthedocs.io/en/stable/index.html
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
