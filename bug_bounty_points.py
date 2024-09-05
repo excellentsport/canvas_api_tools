@@ -18,7 +18,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 data = json.load(open(os.path.join(__location__, "config.json"), encoding="utf-8"))
 
 api_key = data["canvas"]["access_token"]
-api_url = data["canvas"]["beta_host"]
+api_url = data["canvas"]["prod_host"]
 user_id = data["canvas"]["user_id"]
 
 style = Style.from_dict({"aaa": "#44ff00"})
