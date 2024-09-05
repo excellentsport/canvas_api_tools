@@ -6,10 +6,13 @@ import re
 from datetime import datetime, timezone
 from canvasapi import Canvas
 import pyinputplus
+import canvas_lib
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter, FuzzyWordCompleter
+import cmd
 
 # TODO build this out with functions, classes etc to make more flexible
 # TODO make input validation run as while loop so that if I say no to an option, it can ask again, go up a menu etc
-# TODO set up autocompletion for names, using something like https://python-prompt-toolkit.readthedocs.io/en/stable/index.html
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -23,12 +26,8 @@ user_id = data["canvas"]["user_id"]
 # Initialize Canvas Object
 canvas = Canvas(api_url, api_key)
 
-# Get list of current courses I'm teaching
-courses = canvas.get_user(user_id).get_courses(enrollment_type="teacher", state='available')
-
-# filter out courses that are older than 120 days
-recent_courses = [course for course in courses if
-                  (datetime.now(timezone.utc) - course.created_at_date).days < 250]
+# get recent courses and make a list
+recent_courses = canvas_lib.get_current_courses(canvas, user_id, 120)
 course_titles = [i.course_code for i in recent_courses]
 
 # select the correct course
@@ -47,7 +46,14 @@ for count, student in enumerate(course.get_users(enrollment_type=['student'])):
     student_dicts.append(new_dict)
 student_names = [student["name"] for student in student_dicts]
 
-response = pyinputplus.inputMenu(choices=student_names, prompt=STUDENT_PROMPT_STRING, numbered=True)
+#response = pyinputplus.inputMenu(choices=student_names, prompt=STUDENT_PROMPT_STRING, numbered=True)
+
+# format list of names into multiple columns
+cli = cmd.Cmd()
+cli.columnize(student_names)
+
+name_completer = WordCompleter(student_names, match_middle=True, ignore_case=True)
+response = prompt(STUDENT_PROMPT_STRING, completer=name_completer)
 
 SEL_STUDENT_DICT = None
 for i in student_dicts:
