@@ -3,13 +3,14 @@
 import json
 import os
 import re
-from datetime import datetime, timezone
 from canvasapi import Canvas
 import pyinputplus
-import canvas_lib
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter, FuzzyWordCompleter
+from prompt_toolkit import prompt, print_formatted_text, HTML
+from prompt_toolkit.styles import Style
+from prompt_toolkit.completion import WordCompleter
 import cmd
+import canvas_lib
+
 
 # TODO build this out with functions, classes etc to make more flexible
 # TODO make input validation run as while loop so that if I say no to an option, it can ask again, go up a menu etc
@@ -20,8 +21,15 @@ __location__ = os.path.realpath(
 data = json.load(open(os.path.join(__location__, 'config.json'), encoding="utf-8"))
 
 api_key = data["canvas"]["access_token"]
-api_url = data["canvas"]["prod_host"]
+api_url = data["canvas"]["beta_host"]
 user_id = data["canvas"]["user_id"]
+
+style = Style.from_dict({
+    'aaa': '#44ff00'
+})
+
+print_formatted_text(HTML("<aaa>\nUsing host: " + api_url + "</aaa>\n"), style=style)
+
 
 # Initialize Canvas Object
 canvas = Canvas(api_url, api_key)
@@ -30,66 +38,120 @@ canvas = Canvas(api_url, api_key)
 recent_courses = canvas_lib.get_current_courses(canvas, user_id, 120)
 course_titles = [i.course_code for i in recent_courses]
 
-# select the correct course
-COURSE_PROMPT_STRING = "Which course are you adding bug bounty points for?\n"
-for count, i in enumerate(course_titles):
-    COURSE_PROMPT_STRING += str(count+1) + ". " + i + "\n"
+def course_select_menu(course_titles):
+    # select the correct course
+    course_prompt_string = "\nWhich course are you adding bug bounty points for?\n"
+    for count, i in enumerate(course_titles):
+        course_prompt_string += str(count+1) + ". " + i + "\n"
 
-response = pyinputplus.inputInt(prompt=COURSE_PROMPT_STRING, min=1, max=len(course_titles))
-course = recent_courses[int(response)-1]
+    response = pyinputplus.inputInt(prompt=course_prompt_string, min=1, max=len(course_titles))
+    course = recent_courses[int(response)-1]
+    
+    return course
 
-# select the user to add points to
-STUDENT_PROMPT_STRING = "\n\nSelect a student from the following list:\n"
-student_dicts = []
-for count, student in enumerate(course.get_users(enrollment_type=['student'])):
-    new_dict = {"name": student.name, "id": student.id}
-    student_dicts.append(new_dict)
-student_names = [student["name"] for student in student_dicts]
+def user_select(course):
+    # select the user to add points to
+    student_prompt_string = "\n\nSelect a student from the list.\n"
 
-#response = pyinputplus.inputMenu(choices=student_names, prompt=STUDENT_PROMPT_STRING, numbered=True)
+    print("Students in selected course: \n\n")
 
-# format list of names into multiple columns
-cli = cmd.Cmd()
-cli.columnize(student_names)
+    student_dicts = []
+    for count, student in enumerate(course.get_users(enrollment_type=['student'])):
+        new_dict = {"name": student.name, "id": student.id}
+        student_dicts.append(new_dict)
+    student_names = [student["name"] for student in student_dicts]
 
-name_completer = WordCompleter(student_names, match_middle=True, ignore_case=True)
-response = prompt(STUDENT_PROMPT_STRING, completer=name_completer)
+    # format list of names into multiple columns
+    cli = cmd.Cmd()
+    cli.columnize(student_names)
 
-SEL_STUDENT_DICT = None
-for i in student_dicts:
-    if i["name"] == response:
-        SEL_STUDENT_DICT = i
-        break
+    name_completer = WordCompleter(student_names, match_middle=True, ignore_case=True)
+    response = prompt(student_prompt_string, completer=name_completer)
+    # need to add validation so program doesn't break if I don't select a user correctly
 
-# get id for bug bounty assignment
-regex_bug = re.compile(".*bug.*", re.IGNORECASE)
-BUG_ASSIGN_ID = None
-for i in course.get_assignments():
-    if regex_bug.match(i.name):
-        BUG_ASSIGN_ID = i.id
+    sel_student_dict = None
+    for i in student_dicts:
+        if i["name"] == response:
+            sel_student_dict = i
+            break
+    
+    return sel_student_dict
 
-assignment = course.get_assignment(BUG_ASSIGN_ID)
-submission = assignment.get_submission(SEL_STUDENT_DICT["id"])
 
-print('\n' + SEL_STUDENT_DICT["name"] +
-      "'s score for the Bug Bounty is " +
-      str(submission.score) + ".")
+def get_bb_submission_object(course, sel_student_dict):
+    # get id for bug bounty assignment
+    regex_bug = re.compile(".*bug.*", re.IGNORECASE)
+    bug_assign_id = None
+    for i in course.get_assignments():
+        if regex_bug.match(i.name):
+            bug_assign_id = i.id
 
-points_to_add = pyinputplus.inputInt(prompt="\nHow many points should be added?\n", min=1, max=5)
+    assignment = course.get_assignment(bug_assign_id)
+    bb_submission_object = assignment.get_submission(sel_student_dict["id"])
 
-confirm = pyinputplus.inputYesNo(prompt="Are you sure you wish to add " +
-                                        str(points_to_add) +
-                                        " points?\n")
+    return bb_submission_object
 
-if confirm == "yes":
-    if submission.score is not None:
-        score = submission.score + points_to_add
-    else:
-        # Treat no submission as 0 points
-        score = 0 + points_to_add
 
-    submission.edit(submission={'posted_grade': score})
+def ask_point_quantity(sel_student_dict, bb_submission_object):
 
-    print("Score has been changed to: " + str(submission.score))
-else:
-    exit()
+    print('\n' + sel_student_dict["name"] +
+        "'s score for the Bug Bounty is " +
+        str(bb_submission_object.score) + ".")
+
+    points_to_add = pyinputplus.inputInt(prompt="\nHow many points should be added?\n", min=1, max=5)
+
+    return points_to_add
+
+
+def confirm_add_points(points_to_add, bb_submission_object):
+
+    choices = ["Yes", "Change points", "Go to course selection"]
+
+    confirm_choice = pyinputplus.inputMenu(prompt="Are you sure you wish to add " + str(points_to_add) + " points?\n", choices = choices, numbered=True)
+    
+    match confirm_choice:
+        case "Yes":
+            canvas_lib.change_submission_points(bb_submission_object, points_to_add)
+
+            return False
+
+        case "Change points":
+
+            return True
+            
+        case "Go to course selection":
+
+            return False
+
+
+def add_more_points_prompt():
+    confirm = pyinputplus.inputYesNo(prompt="Add more bug bounty points?\n")
+    if confirm == "no":
+        exit()
+
+
+def main():
+
+    continue_main_loop = True
+
+    while continue_main_loop:
+        selected_course = course_select_menu(course_titles)
+
+        sel_student_dict = user_select(selected_course)
+
+        bb_submission_object = get_bb_submission_object(selected_course, sel_student_dict)
+
+        continue_point_loop = True
+
+        while continue_point_loop:
+            points_to_add = ask_point_quantity(sel_student_dict, bb_submission_object)
+
+            continue_point_loop = confirm_add_points(points_to_add, bb_submission_object)
+
+        add_more_points_prompt()
+
+
+
+
+if __name__ == "__main__":
+    main()
