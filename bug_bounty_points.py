@@ -8,11 +8,11 @@ import pyinputplus
 from prompt_toolkit import prompt, print_formatted_text, HTML
 from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.validation import Validator
 import cmd
 import canvas_lib
 
 
-# TODO build this out with functions, classes etc to make more flexible
 # TODO make input validation run as while loop so that if I say no to an option, it can ask again, go up a menu etc
 
 __location__ = os.path.realpath(
@@ -37,6 +37,9 @@ canvas = Canvas(api_url, api_key)
 # get recent courses and make a list
 recent_courses = canvas_lib.get_current_courses(canvas, user_id, 120)
 course_titles = [i.course_code for i in recent_courses]
+
+
+### General Functions ###
 
 def course_select_menu(course_titles):
     # select the correct course
@@ -65,8 +68,16 @@ def user_select(course):
     cli = cmd.Cmd()
     cli.columnize(student_names)
 
+    def is_in_list(text):
+        return text in student_names
+
+    list_validator = Validator.from_callable(
+        is_in_list,
+        error_message="Name entered not in list.",
+    move_cursor_to_end=True
+    )
     name_completer = WordCompleter(student_names, match_middle=True, ignore_case=True)
-    response = prompt(student_prompt_string, completer=name_completer)
+    response = prompt(student_prompt_string, completer=name_completer, validator=list_validator, validate_while_typing=True)
     # need to add validation so program doesn't break if I don't select a user correctly
 
     sel_student_dict = None
@@ -113,21 +124,26 @@ def confirm_add_points(points_to_add, bb_submission_object):
         case "Yes":
             canvas_lib.change_submission_points(bb_submission_object, points_to_add)
 
-            return False
+            return 1
 
         case "Change points":
 
-            return True
+            return 2
             
         case "Go to course selection":
 
-            return False
+            return 3
 
 
 def add_more_points_prompt():
     confirm = pyinputplus.inputYesNo(prompt="Add more bug bounty points?\n")
-    if confirm == "no":
-        exit()
+    match confirm:
+        case "yes":
+            return False
+
+        case "no":
+            exit()
+
 
 
 def main():
@@ -146,9 +162,15 @@ def main():
         while continue_point_loop:
             points_to_add = ask_point_quantity(sel_student_dict, bb_submission_object)
 
-            continue_point_loop = confirm_add_points(points_to_add, bb_submission_object)
+            match confirm_add_points(points_to_add, bb_submission_object):
+                case 1:
+                    continue_point_loop = add_more_points_prompt()
+                case 2:
+                    continue
+                case 3:
+                    break
 
-        add_more_points_prompt()
+            
 
 
 
