@@ -30,11 +30,11 @@ def get_students(course_object):
 def change_submission_points(submission_object, points_to_add):
     """Takes a Canvas submission object and adds points"""
     if submission_object.score is not None:
-                score = submission_object.score + points_to_add
+        score = submission_object.score + points_to_add
     else:
         # Treat no submission as 0 points
         score = 0 + points_to_add
 
-        submission_object.edit(submission={'posted_grade': score})
+    submission_object.edit(submission={'posted_grade': score})
 
-        print("Score has been changed to: " + str(submission_object.score))
+    print("Score has been changed to: " + str(submission_object.score))
