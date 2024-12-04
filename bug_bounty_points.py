@@ -1,5 +1,11 @@
 """BugBountyPoints.py - script to quickly add points on the bug bounty"""
 
+# TODO Add ability to append a comment on the bug bounty assignment
+# TODO add args when calling this script - would be great for opting to use beta URL
+# TODO Add ability to check history of bug bounty point additions w/comments
+# TODO improve recent_courses function - as semester progresses I sometimes lose the list.
+# TODO have script check if points were successfully added - does API give a response?
+
 import json
 import os
 import re
@@ -11,6 +17,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
 import canvas_lib
+
 
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -30,7 +37,7 @@ print_formatted_text(HTML("<aaa>\nUsing host: " + api_url + "</aaa>\n"), style=s
 canvas = Canvas(api_url, api_key)
 
 # get recent courses and make a list
-recent_courses = canvas_lib.get_current_courses(canvas, user_id, 120)
+recent_courses = canvas_lib.get_current_courses(canvas, user_id, 300)
 course_titles = [i.course_code for i in recent_courses]
 
 
