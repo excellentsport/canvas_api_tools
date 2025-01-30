@@ -16,6 +16,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
 import canvas_lib
+from datetime import datetime
 
 
 
@@ -93,7 +94,7 @@ def user_select(course):
         validator=list_validator,
         validate_while_typing=True,
     )
-    # need to add validation so program doesn't break if I don't select a user correctly
+    # TODO add validation so program doesn't break if I don't select a user correctly
 
     sel_student_dict = None
     for i in student_dicts:
@@ -114,7 +115,7 @@ def get_bb_submission_object(course, sel_student_dict):
             bug_assign_id = i.id
 
     assignment = course.get_assignment(bug_assign_id)
-    bb_submission_object = assignment.get_submission(sel_student_dict["id"])
+    bb_submission_object = assignment.get_submission(sel_student_dict["id"], include=["submission_comments"])
 
     return bb_submission_object
 
@@ -129,26 +130,52 @@ def ask_point_quantity(sel_student_dict, bb_submission_object):
         + "."
     )
 
+    #print(dir(bb_submission_object))
+
+    print("\nPrior Comments:")
+    try:
+        for i in bb_submission_object.submission_comments:
+            print(str(datetime.strptime(i["created_at"], "%Y-%m-%dT%H:%M:%SZ")) + ": " + i["comment"])
+    except AttributeError:
+        print("\nNo prior comments.")
+
     points_to_add = pyinputplus.inputInt(
         prompt="\nHow many points should be added?\n", min=1, max=5
     )
 
     return points_to_add
 
+def ask_comment_text():
+    """Get comment text to add to bug bounty submission object"""
+    comment = pyinputplus.inputYesNo(prompt="Would you like to add a comment to the submission?\n")
+    match comment:
+        case "yes":
+            comment_text = pyinputplus.inputStr(prompt="Enter your comment:\n")
+            return comment_text
+        case "no":
+            comment_text = ""
 
-def confirm_add_points(points_to_add, bb_submission_object):
+    return comment_text
+
+
+def confirm_add_points(points_to_add, bb_submission_object, comment):
     """confirm if previously chosen point quantity should be added to bb item"""
     choices = ["Yes", "Change points", "Go to course selection"]
 
+    if comment != "":
+        prompt_string = "Are you sure you wish to add " + str(points_to_add) + " points and the following comment?\n" + comment + "\n"
+    else:
+        prompt_string = "Are you sure you wish to add " + str(points_to_add) + " points?\n"
+
     confirm_choice = pyinputplus.inputMenu(
-        prompt="Are you sure you wish to add " + str(points_to_add) + " points?\n",
+        prompt=prompt_string,
         choices=choices,
         numbered=True,
     )
 
     match confirm_choice:
         case "Yes":
-            canvas_lib.change_submission_points(bb_submission_object, points_to_add)
+            canvas_lib.change_submission_points(bb_submission_object, points_to_add, comment)
 
             return 1
 
@@ -187,8 +214,9 @@ def main():
 
         while continue_point_loop:
             points_to_add = ask_point_quantity(sel_student_dict, bb_submission_object)
+            comment = ask_comment_text()
 
-            match confirm_add_points(points_to_add, bb_submission_object):
+            match confirm_add_points(points_to_add, bb_submission_object, comment):
                 case 1:
                     continue_point_loop = add_more_points_prompt()
                 case 2:

@@ -20,7 +20,7 @@ def get_favorite_courses(canvas_object, user_id):
     courses = canvas_object.get_user(user_id).get_courses(
         enrollment_type="teacher", state='available', enrollment_state="active", include=["favorites"]
     )
-    
+
     favorites = [course for course in courses if course.is_favorite == True]
 
     return favorites
@@ -38,14 +38,26 @@ def get_students(course_object):
     return student_dicts
 
 
-def change_submission_points(submission_object, points_to_add):
-    """Takes a Canvas submission object and adds points"""
+def change_submission_points(submission_object, points_to_add, comment_text=""):
+    """Takes a Canvas submission object and adds points. Optionally add a comment"""
     if submission_object.score is not None:
         score = submission_object.score + points_to_add
     else:
         # Treat no submission as 0 points
         score = 0 + points_to_add
 
-    submission_object.edit(submission={'posted_grade': score})
+    print("comment_text: ", comment_text)
+    #print(dir(submission_object))
 
-    print("Score has been changed to: " + str(submission_object.score))
+    if comment_text != "":
+        submission_object.edit(submission={'posted_grade': score}, comment={'text_comment': comment_text})
+    else:
+        submission_object.edit(submission={'posted_grade': score})
+
+    print("\nScore has been changed to: " + str(submission_object.score))
+    print("Current comments are:\n")
+    for i in submission_object.submission_comments:
+        print(str(datetime.strptime(i["created_at"], "%Y-%m-%dT%H:%M:%SZ")) + ": " + i["comment"])
+    
+    if comment_text != "":
+        print("\nComment has been added to submission.\n")
