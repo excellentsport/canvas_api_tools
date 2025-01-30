@@ -14,6 +14,17 @@ def get_current_courses(canvas_object, user_id, max_age=250):
 
     return recent_courses
 
+def get_favorite_courses(canvas_object, user_id):
+    """Output a list of active courses from the Canvas object that are currently saved as favorites"""
+
+    courses = canvas_object.get_user(user_id).get_courses(
+        enrollment_type="teacher", state='available', enrollment_state="active", include=["favorites"]
+    )
+    
+    favorites = [course for course in courses if course.is_favorite == True]
+
+    return favorites
+
 
 def get_students(course_object):
     """Output a dict of active students in the course object"""
