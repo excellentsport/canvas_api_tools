@@ -37,14 +37,19 @@ print_formatted_text(HTML("<aaa>\nUsing host: " + api_url + "</aaa>\n"), style=s
 canvas = Canvas(api_url, api_key)
 
 # get recent courses and make a list
-recent_courses = canvas_lib.get_current_courses(canvas, user_id, 300)
-course_titles = [i.course_code for i in recent_courses]
+# commented out due to use of favorite_courses function
+# recent_courses = canvas_lib.get_current_courses(canvas, user_id, 300)
+
+favorite_courses = canvas_lib.get_favorite_courses(canvas, user_id)
+
+
+course_titles = [i.course_code for i in favorite_courses]
 
 
 ### General Functions ###
 
 
-def course_select_menu(course_titles):
+def course_select_menu(course_titles, courses):
     """Select course from list of courses"""
     # select the correct course
     course_prompt_string = "\nWhich course are you adding bug bounty points for?\n"
@@ -54,7 +59,7 @@ def course_select_menu(course_titles):
     response = pyinputplus.inputInt(
         prompt=course_prompt_string, min=1, max=len(course_titles)
     )
-    course = recent_courses[int(response) - 1]
+    course = courses[int(response) - 1]
 
     return course
 
@@ -171,7 +176,7 @@ def main():
     continue_main_loop = True
 
     while continue_main_loop:
-        selected_course = course_select_menu(course_titles)
+        selected_course = course_select_menu(course_titles, favorite_courses)
 
         sel_student_dict = user_select(selected_course)
 
