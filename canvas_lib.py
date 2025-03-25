@@ -4,7 +4,9 @@ from datetime import datetime, timezone
 
 
 def get_current_courses(canvas_object, user_id, max_age=250):
-    """Output a list of active courses from the Canvas Object younger than max_age days"""
+    """Output a list of active courses from the Canvas Object younger than max_age days
+    ***Deprecated - use get_favorite_courses instead***
+    """
 
     courses = canvas_object.get_user(user_id).get_courses(
         enrollment_type="teacher", state='available')
