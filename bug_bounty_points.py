@@ -1,8 +1,6 @@
 """BugBountyPoints.py - script to quickly add points on the bug bounty"""
 
-# TODO Add ability to append a comment on the bug bounty assignment
 # TODO add args when calling this script - would be great for opting to use beta URL
-# TODO Add ability to check history of bug bounty point additions w/comments
 # TODO have script check if points were successfully added - does API give a response?
 
 import json
