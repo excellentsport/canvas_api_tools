@@ -3,8 +3,7 @@
 # TODO add args when calling this script - would be great for opting to use beta URL
 # TODO have script check if points were successfully added - does API give a response?
 
-import json
-import os
+
 import re
 import cmd
 from canvasapi import Canvas
@@ -16,18 +15,12 @@ from prompt_toolkit.validation import Validator
 import canvas_lib
 from datetime import datetime
 
+# Load API keys from environment variables
+api_key, beta_url, prod_url, user_id = canvas_lib.load_canvas_keys()
 
-
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
-data = json.load(open(os.path.join(__location__, "config.json"), encoding="utf-8"))
-
-api_key = data["canvas"]["access_token"]
-api_url = data["canvas"]["prod_host"]
-user_id = data["canvas"]["user_id"]
-
+# determine if we are using beta or production and report to user - this should really be an arg
+api_url = prod_url
 style = Style.from_dict({"aaa": "#44ff00"})
-
 print_formatted_text(HTML("<aaa>\nUsing host: " + api_url + "</aaa>\n"), style=style)
 
 

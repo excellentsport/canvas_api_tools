@@ -1,7 +1,16 @@
 """canvas_lib.py - contains standard functions for interacting with Canvas API"""
 
+import os
 from datetime import datetime, timezone
 
+def load_canvas_keys():
+    """Gets important info from env variables"""
+    api_key = os.environ["CANVAS_API_KEY"]
+    beta_url = os.environ["CANVAS_BETA_URL"]
+    prod_url = os.environ["CANVAS_PRODUCTION_URL"]
+    user_id = os.environ["CANVAS_USER_ID"]
+
+    return api_key, beta_url, prod_url, user_id
 
 def get_current_courses(canvas_object, user_id, max_age=250):
     """Output a list of active courses from the Canvas Object younger than max_age days
