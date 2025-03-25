@@ -36,13 +36,8 @@ print_formatted_text(HTML("<aaa>\nUsing host: " + api_url + "</aaa>\n"), style=s
 # Initialize Canvas Object
 canvas = Canvas(api_url, api_key)
 
-# get recent courses and make a list
-# commented out due to use of favorite_courses function
-# recent_courses = canvas_lib.get_current_courses(canvas, user_id, 300)
-
+# get currently favorited courses and make a list of course titles
 favorite_courses = canvas_lib.get_favorite_courses(canvas, user_id)
-
-
 course_titles = [i.course_code for i in favorite_courses]
 
 
@@ -129,8 +124,6 @@ def ask_point_quantity(sel_student_dict, bb_submission_object):
         + str(bb_submission_object.score)
         + "."
     )
-
-    #print(dir(bb_submission_object))
 
     print("\nPrior Comments:")
     try:
