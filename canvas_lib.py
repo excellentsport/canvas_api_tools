@@ -43,7 +43,11 @@ def get_students(course_object):
     student_dicts = []
 
     for student in course_object.get_users(enrollment_type=['student']):
-        new_dict = {"name": student.name, "id": student.id}
+        new_dict = {"name": student.name, 
+                    "id": student.id,
+                    "email": student.email,
+                    "course_id": course_object.id,
+                    "course_name": course_object.name}
         student_dicts.append(new_dict)
 
     return student_dicts
