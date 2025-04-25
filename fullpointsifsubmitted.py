@@ -3,22 +3,20 @@ Give full points to any submission without a grade for specified course assignme
 """
 
 # TODO Need to look into whether or not this will handle groups
+# TODO input of course number should either be a command, or be selected (like the BB script)
+# TODO script should search through ungraded assignments and present list for selection
+# TODO how does this script work with rubrics?
 
-import json
-import os
 from canvasapi import Canvas
+import canvas_lib
 
-COURSE_NUMBER = 21519
-ASSIGNMENT_NUMBER = 325713
+COURSE_NUMBER = 27351
+ASSIGNMENT_NUMBER = 467118
 
 # Get Canvas API credentials
-__location__ = os.path.realpath(
-    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+api_key, beta_url, prod_url, user_id = canvas_lib.load_canvas_keys()
 
-data = json.load(open(os.path.join(__location__, 'config.json'), encoding="utf-8"))
-
-api_key = data["canvas"]["access_token"]
-api_url = data["canvas"]["prod_host"]
+api_url = prod_url
 # TODO need to add option to switch between beta & prod
 
 
