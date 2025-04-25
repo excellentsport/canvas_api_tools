@@ -35,21 +35,6 @@ course_titles = [i.course_code for i in favorite_courses]
 ### General Functions ###
 
 
-def course_select_menu(course_titles, courses):
-    """Select course from list of courses"""
-    # select the correct course
-    course_prompt_string = "\nWhich course are you adding bug bounty points for?\n"
-    for count, i in enumerate(course_titles):
-        course_prompt_string += str(count + 1) + ". " + i + "\n"
-
-    response = pyinputplus.inputInt(
-        prompt=course_prompt_string, min=1, max=len(course_titles)
-    )
-    course = courses[int(response) - 1]
-
-    return course
-
-
 def user_select(course):
     """Select a user from a menu with autocompletion"""
     # select the user to add points to
@@ -186,7 +171,7 @@ def main():
     continue_main_loop = True
 
     while continue_main_loop:
-        selected_course = course_select_menu(course_titles, favorite_courses)
+        selected_course = canvas_lib.course_select_menu(course_titles, favorite_courses)
 
         sel_student_dict = user_select(selected_course)
 

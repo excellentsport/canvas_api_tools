@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime, timezone
+import pyinputplus
 
 def load_canvas_keys():
     """Gets important info from env variables"""
@@ -76,3 +77,19 @@ def change_submission_points(submission_object, points_to_add, comment_text=""):
     
     if comment_text != "":
         print("\nComment has been added to submission.\n")
+
+
+
+def course_select_menu(course_titles, courses):
+    """Select course from list of courses"""
+    # select the correct course
+    course_prompt_string = "\nSelect the course you wish to interact with\n"
+    for count, i in enumerate(course_titles):
+        course_prompt_string += str(count + 1) + ". " + i + "\n"
+
+    response = pyinputplus.inputInt(
+        prompt=course_prompt_string, min=1, max=len(course_titles)
+    )
+    course = courses[int(response) - 1]
+
+    return course
