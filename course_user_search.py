@@ -32,3 +32,25 @@ for course in favorite_courses:
     student_master_list.extend(students_temp)
 
 # TODO: process list and combine duplicates with course2 and course3 etc
+
+merged_students = {}
+
+for student in student_master_list:
+    user_id = student['id']
+    
+    if user_id not in merged_students:
+        merged_students[user_id] = {
+            "name": student["name"],
+            "id": student["id"],
+            "email": student["email"],
+            "courses": [{
+                "course_id": student["course_id"],
+                "course_name": student["course_name"]
+            }]
+        }
+    else:
+        merged_students[user_id]["courses"].append({
+            "course_id": student["course_id"],
+            "course_name": student["course_name"]
+        })
+

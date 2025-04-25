@@ -3,14 +3,12 @@ Give full points to any submission without a grade for specified course assignme
 """
 
 # TODO Need to look into whether or not this will handle groups
-# TODO input of course number should either be a command, or be selected (like the BB script)
 # TODO script should search through ungraded assignments and present list for selection
 # TODO how does this script work with rubrics?
 
 from canvasapi import Canvas
 import canvas_lib
 
-COURSE_NUMBER = 27351
 ASSIGNMENT_NUMBER = 467118
 
 # Get Canvas API credentials
@@ -23,9 +21,17 @@ api_url = prod_url
 # Initialize Canvas Object
 canvas = Canvas(api_url, api_key)
 
+# get currently favorited courses and make a list of course titles
+favorite_courses = canvas_lib.get_favorite_courses(canvas, user_id)
+course_titles = [i.course_code for i in favorite_courses]
+
+# select course
+selected_course = canvas_lib.course_select_menu(course_titles, favorite_courses)
+
+
 
 # Get Course object
-course = canvas.get_course(COURSE_NUMBER)
+course = selected_course
 print("\n" + "Accessing info for course " + course.name + "\n")
 
 assignment = course.get_assignment(ASSIGNMENT_NUMBER)
