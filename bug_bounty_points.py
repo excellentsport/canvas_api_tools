@@ -3,9 +3,9 @@
 # TODO add args when calling this script - would be great for opting to use beta URL
 # TODO have script check if points were successfully added - does API give a response?
 
-
 import re
 import cmd
+from datetime import datetime
 from canvasapi import Canvas
 import pyinputplus
 from prompt_toolkit import prompt, print_formatted_text, HTML
@@ -13,7 +13,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
 import canvas_lib
-from datetime import datetime
+
 
 # Load API keys from environment variables
 api_key, beta_url, prod_url, user_id = canvas_lib.load_canvas_keys()
@@ -32,7 +32,7 @@ favorite_courses = canvas_lib.get_favorite_courses(canvas, user_id)
 course_titles = [i.course_code for i in favorite_courses]
 
 
-### General Functions ###
+# General Functions
 
 
 def user_select(course):
@@ -43,7 +43,7 @@ def user_select(course):
     print("Students in selected course: \n\n")
 
     student_dicts = []
-    for count, student in enumerate(course.get_users(enrollment_type=["student"])):
+    for student in course.get_users(enrollment_type=["student"]):
         new_dict = {"name": student.name, "id": student.id}
         student_dicts.append(new_dict)
     student_names = [student["name"] for student in student_dicts]
@@ -86,7 +86,9 @@ def get_bb_submission_object(course, sel_student_dict):
             bug_assign_id = i.id
 
     assignment = course.get_assignment(bug_assign_id)
-    bb_submission_object = assignment.get_submission(sel_student_dict["id"], include=["submission_comments"])
+    bb_submission_object = assignment.get_submission(
+        sel_student_dict["id"], include=["submission_comments"]
+    )
 
     return bb_submission_object
 
@@ -104,7 +106,11 @@ def ask_point_quantity(sel_student_dict, bb_submission_object):
     print("\nPrior Comments:")
     try:
         for i in bb_submission_object.submission_comments:
-            print(str(datetime.strptime(i["created_at"], "%Y-%m-%dT%H:%M:%SZ")) + ": " + i["comment"])
+            print(
+                str(datetime.strptime(i["created_at"], "%Y-%m-%dT%H:%M:%SZ"))
+                + ": "
+                + i["comment"]
+            )
     except AttributeError:
         print("\nNo prior comments.")
 
@@ -114,9 +120,12 @@ def ask_point_quantity(sel_student_dict, bb_submission_object):
 
     return points_to_add
 
+
 def ask_comment_text():
     """Get comment text to add to bug bounty submission object"""
-    comment = pyinputplus.inputYesNo(prompt="Would you like to add a comment to the submission?\n")
+    comment = pyinputplus.inputYesNo(
+        prompt="Would you like to add a comment to the submission?\n"
+    )
     match comment:
         case "yes":
             comment_text = pyinputplus.inputStr(prompt="Enter your comment:\n")
@@ -132,9 +141,17 @@ def confirm_add_points(points_to_add, bb_submission_object, comment):
     choices = ["Yes", "Change points", "Go to course selection"]
 
     if comment != "":
-        prompt_string = "Are you sure you wish to add " + str(points_to_add) + " points and the following comment?\n" + comment + "\n"
+        prompt_string = (
+            "Are you sure you wish to add "
+            + str(points_to_add)
+            + " points and the following comment?\n"
+            + comment
+            + "\n"
+        )
     else:
-        prompt_string = "Are you sure you wish to add " + str(points_to_add) + " points?\n"
+        prompt_string = (
+            "Are you sure you wish to add " + str(points_to_add) + " points?\n"
+        )
 
     confirm_choice = pyinputplus.inputMenu(
         prompt=prompt_string,
@@ -144,7 +161,9 @@ def confirm_add_points(points_to_add, bb_submission_object, comment):
 
     match confirm_choice:
         case "Yes":
-            canvas_lib.change_submission_points(bb_submission_object, points_to_add, comment)
+            canvas_lib.change_submission_points(
+                bb_submission_object, points_to_add, comment
+            )
 
             return 1
 
