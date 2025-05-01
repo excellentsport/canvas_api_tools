@@ -4,12 +4,11 @@ Give full points to any submission without a grade for specified course assignme
 
 # TODO Need to look into whether or not this will handle groups
 # TODO script should search through ungraded assignments and present list for selection
-# TODO how does this script work with rubrics?
+# TODO how does this script work with rubrics? (ignores rubric and just gives points, I think)
 
 from canvasapi import Canvas
 import canvas_lib
-
-ASSIGNMENT_NUMBER = 467118
+import pyinputplus
 
 # Get Canvas API credentials
 api_key, beta_url, prod_url, user_id = canvas_lib.load_canvas_keys()
@@ -28,13 +27,42 @@ course_titles = [i.course_code for i in favorite_courses]
 # select course
 selected_course = canvas_lib.course_select_menu(course_titles, favorite_courses)
 
-
-
 # Get Course object
 course = selected_course
 print("\n" + "Accessing info for course " + course.name + "\n")
 
-assignment = course.get_assignment(ASSIGNMENT_NUMBER)
+# Find all assignments with ungraded submissions
+ungraded_assignments = course.get_assignments(bucket="ungraded")
+
+# Select assignment from list of ungraded
+assignment_prompt_string = "Select assignment to autograde:\n"
+
+assignment_names = []
+for assignment in ungraded_assignments:
+    assignment_names.append(assignment.name)
+
+if len(assignment_names) == 0:
+    print("No ungraded assignments found.")
+    # break
+
+if len(assignment_names) == 1:
+    assignment = ungraded_assignments[0]
+    print("\n" + "Accessing info for assignment " + assignment.name + "\n")
+    # return assignment
+    
+else:
+    response = pyinputplus.inputMenu(
+        assignment_names,
+        numbered=True,
+        prompt=assignment_prompt_string
+    )
+
+    for selected_assignment in ungraded_assignments:
+        if selected_assignment.name == response:
+            assignment = selected_assignment
+            print("\n" + "Accessing info for assignment " + assignment.name + "\n")
+    #        break
+
 
 # Get reference list of student names
 students = course.get_users(enrollment_type=['student'])
@@ -57,16 +85,10 @@ count = sum(1 for submission in submissions if submission.score is None)
 print(assignment.name + " has " + str(count) + " submissions without a grade.")
 
 # Check if we should proceed with regrade
-while True:
-    yesno = input("Proceed with autograding? y/n \n")
+response = pyinputplus.inputYesNo("Proceed with autograding? (yes/no)\n")
 
-    if yesno == 'y':
-        break
-    if yesno == 'n':
-        exit()
-    if yesno != "y" or yesno != "n":
-        print("Please enter y or n")
-        continue
+if response == 'no':
+    sys.exit()
 
 # Do actual autograding
 for submission in submissions:
@@ -82,3 +104,4 @@ for submission in submissions:
         submission.edit(submission={'posted_grade': points_awarded})
 
         print(id_match['name'] + " now has a score of " + str(submission.score))
+
