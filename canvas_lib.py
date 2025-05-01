@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timezone
 import pyinputplus
 
+
 def load_canvas_keys():
     """Gets important info from env variables"""
     api_key = os.environ["CANVAS_API_KEY"]
@@ -13,27 +14,37 @@ def load_canvas_keys():
 
     return api_key, beta_url, prod_url, user_id
 
+
 def get_current_courses(canvas_object, user_id, max_age=250):
     """Output a list of active courses from the Canvas Object younger than max_age days
     ***Deprecated - use get_favorite_courses instead***
     """
 
     courses = canvas_object.get_user(user_id).get_courses(
-        enrollment_type="teacher", state='available')
+        enrollment_type="teacher", state="available"
+    )
 
-    recent_courses = [course for course in courses if
-                      (datetime.now(timezone.utc) - course.created_at_date).days < max_age]
+    recent_courses = [
+        course
+        for course in courses
+        if (datetime.now(timezone.utc) - course.created_at_date).days < max_age
+    ]
 
     return recent_courses
 
+
 def get_favorite_courses(canvas_object, user_id):
-    """Output a list of active courses from the Canvas object that are currently saved as favorites"""
+    """Output a list of active courses from the Canvas
+    object that are currently saved as favorites"""
 
     courses = canvas_object.get_user(user_id).get_courses(
-        enrollment_type="teacher", state='available', enrollment_state="active", include=["favorites"]
+        enrollment_type="teacher",
+        state="available",
+        enrollment_state="active",
+        include=["favorites"],
     )
 
-    favorites = [course for course in courses if course.is_favorite == True]
+    favorites = [course for course in courses if course.is_favorite is True]
 
     return favorites
 
@@ -43,12 +54,14 @@ def get_students(course_object):
 
     student_dicts = []
 
-    for student in course_object.get_users(enrollment_type=['student']):
-        new_dict = {"name": student.name, 
-                    "id": student.id,
-                    "email": student.email,
-                    "course_id": course_object.id,
-                    "course_name": course_object.name}
+    for student in course_object.get_users(enrollment_type=["student"]):
+        new_dict = {
+            "name": student.name,
+            "id": student.id,
+            "email": student.email,
+            "course_id": course_object.id,
+            "course_name": course_object.name,
+        }
         student_dicts.append(new_dict)
 
     return student_dicts
@@ -63,21 +76,26 @@ def change_submission_points(submission_object, points_to_add, comment_text=""):
         score = 0 + points_to_add
 
     print("comment_text: ", comment_text)
-    #print(dir(submission_object))
+    # print(dir(submission_object))
 
     if comment_text != "":
-        submission_object.edit(submission={'posted_grade': score}, comment={'text_comment': comment_text})
+        submission_object.edit(
+            submission={"posted_grade": score}, comment={"text_comment": comment_text}
+        )
     else:
-        submission_object.edit(submission={'posted_grade': score})
+        submission_object.edit(submission={"posted_grade": score})
 
     print("\nScore has been changed to: " + str(submission_object.score))
     print("Current comments are:\n")
     for i in submission_object.submission_comments:
-        print(str(datetime.strptime(i["created_at"], "%Y-%m-%dT%H:%M:%SZ")) + ": " + i["comment"])
-    
+        print(
+            str(datetime.strptime(i["created_at"], "%Y-%m-%dT%H:%M:%SZ"))
+            + ": "
+            + i["comment"]
+        )
+
     if comment_text != "":
         print("\nComment has been added to submission.\n")
-
 
 
 def course_select_menu(course_titles, courses):
