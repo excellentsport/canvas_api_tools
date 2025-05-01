@@ -3,7 +3,6 @@ Give full points to any submission without a grade for specified course assignme
 """
 
 # TODO Need to look into whether or not this will handle groups
-# TODO script should search through ungraded assignments and present list for selection
 # TODO how does this script work with rubrics? (ignores rubric and just gives points, I think)
 
 from canvasapi import Canvas
@@ -13,9 +12,8 @@ import canvas_lib
 
 def select_assignment_object_menu(ungraded_assignments):
     """Select assignment from list of ungraded assignments"""
-    
-    while True:
 
+    while True:
         assignment_names = []
         for assignment in ungraded_assignments:
             assignment_names.append(assignment.name)
@@ -30,19 +28,19 @@ def select_assignment_object_menu(ungraded_assignments):
             print("\n" + "Only one assignment found: " + assignment.name + "\n")
             print("\n" + "Accessing info for assignment " + assignment.name + "\n")
             return assignment
-        
+
         else:
             assignment_prompt_string = "Select assignment to autograde:\n"
             response = pyinputplus.inputMenu(
-                assignment_names,
-                numbered=True,
-                prompt=assignment_prompt_string
+                assignment_names, numbered=True, prompt=assignment_prompt_string
             )
 
             for selected_assignment in ungraded_assignments:
                 if selected_assignment.name == response:
                     assignment = selected_assignment
-                    print("\n" + "Accessing info for assignment " + assignment.name + "\n")
+                    print(
+                        "\n" + "Accessing info for assignment " + assignment.name + "\n"
+                    )
                     break
 
 
@@ -50,12 +48,11 @@ def add_points_to_submitted(selected_assignment, course):
     """Add points to all submissions without a grade for selected assignment"""
 
     # Get reference list of student names
-    students = course.get_users(enrollment_type=['student'])
+    students = course.get_users(enrollment_type=["student"])
     student_list = []
 
     for student in students:
-        student_dict = {"id": student.id,
-                        "name": str(student.name)}
+        student_dict = {"id": student.id, "name": str(student.name)}
         student_list.append(student_dict)
 
     # Give max points if student submitted. Based on
@@ -67,29 +64,33 @@ def add_points_to_submitted(selected_assignment, course):
 
     count = sum(1 for submission in submissions if submission.score is None)
 
-    print(selected_assignment.name + " has " + str(count) + " submissions without a grade.")
+    print(
+        selected_assignment.name
+        + " has "
+        + str(count)
+        + " submissions without a grade."
+    )
 
     # Check if we should proceed with regrade
     response = pyinputplus.inputYesNo("Proceed with autograding? (yes/no)\n")
 
-    if response == 'no':
+    if response == "no":
         print("No regrade will be performed.")
         return
 
     # Do actual autograding
     for submission in submissions:
-
         # Handle an unscored assignment by checking the `score` value for None
 
         if submission.score is None:
-
             for student in student_list:
-                if student['id'] == submission.user_id:
+                if student["id"] == submission.user_id:
                     id_match = student
 
-            submission.edit(submission={'posted_grade': points_awarded})
+            submission.edit(submission={"posted_grade": points_awarded})
 
-            print(id_match['name'] + " now has a score of " + str(submission.score))
+            print(id_match["name"] + " now has a score of " + str(submission.score))
+
 
 def main():
     """main function to run the script"""
@@ -124,11 +125,9 @@ def main():
 
         # Ask if user wants to continue
         response = pyinputplus.inputYesNo("Continue with another course? (yes/no)\n")
-        if response == 'no':
+        if response == "no":
             print("Exiting script.")
             break
-
-        
 
 
 if __name__ == "__main__":
