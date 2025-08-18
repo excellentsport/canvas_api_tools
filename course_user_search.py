@@ -54,7 +54,8 @@ for student in student_master_list:
             "course_name": student["course_name"]
         })
 
+# TODO Save merged_students to file, and when loading, check if file exists and prompt to load or rebuild
 # TODO download avatars for each student and save to disk
 # TODO use images from CMS for missing avatars
-# TODO add a search function to find students by name or email
+# TODO add a search function to find students by name or email, should be first prompt if database already exists
 # TODO search should display their courses (hotlink to each), email address as hotlink, avatar image
