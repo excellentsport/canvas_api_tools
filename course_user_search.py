@@ -31,8 +31,7 @@ for course in favorite_courses:
     students_temp = canvas_lib.get_students(course)
     student_master_list.extend(students_temp)
 
-# TODO: process list and combine duplicates with course2 and course3 etc
-
+# process list and combine duplicates with course2 and course3 etc
 merged_students = {}
 
 for student in student_master_list:
@@ -43,6 +42,7 @@ for student in student_master_list:
             "name": student["name"],
             "id": student["id"],
             "email": student["email"],
+            "avatar_url": student["avatar_url"],
             "courses": [{
                 "course_id": student["course_id"],
                 "course_name": student["course_name"]
@@ -53,4 +53,5 @@ for student in student_master_list:
             "course_id": student["course_id"],
             "course_name": student["course_name"]
         })
+
 
