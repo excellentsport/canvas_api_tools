@@ -124,11 +124,11 @@ def ask_point_quantity(sel_student_dict, bb_submission_object):
 def ask_comment_text():
     """Get comment text to add to bug bounty submission object"""
     comment = pyinputplus.inputYesNo(
-        prompt="Would you like to add a comment to the submission?\n"
+        prompt="\nWould you like to add a comment to the submission?\n"
     )
     match comment:
         case "yes":
-            comment_text = pyinputplus.inputStr(prompt="Enter your comment:\n")
+            comment_text = pyinputplus.inputStr(prompt="\nEnter your comment:\n")
             return comment_text
         case "no":
             comment_text = ""
@@ -144,13 +144,14 @@ def confirm_add_points(points_to_add, bb_submission_object, comment):
         prompt_string = (
             "Are you sure you wish to add "
             + str(points_to_add)
-            + " points and the following comment?\n"
+            + " points and the following comment?\n\n"
+            + "\""
             + comment
-            + "\n"
+            + "\"\n\n"
         )
     else:
         prompt_string = (
-            "Are you sure you wish to add " + str(points_to_add) + " points?\n"
+            "\nAre you sure you wish to add " + str(points_to_add) + " points?\n"
         )
 
     confirm_choice = pyinputplus.inputMenu(
